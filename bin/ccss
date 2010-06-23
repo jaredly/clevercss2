@@ -5,7 +5,8 @@ import re
 import sys
 
 import clevercss
-from clevercss.errors import *
+from clevercss.backwards import cleverfy
+from clevercss.errors import ParseError, TranslateError
 
 help_text = '''
 usage: %prog <file 1> ... <file n>
@@ -52,44 +53,6 @@ def main():
     else:
         convert_stream()
 
-import cssutils
-import logging
-cssutils.log.setLevel(logging.FATAL)
-
-def parseCSS(text):
-    parser = cssutils.CSSParser()
-    css = parser.parseString(text)
-    rules = {}
-    for rule in css.cssRules:
-        commas = rule.selectorText.split(',')
-        for comma in commas:
-            parts = comma.split()
-            c = rules
-            for i, part in enumerate(parts):
-                if part in '>+':
-                    parts[i+1] = '&' + part + parts[i+1]
-                    continue
-                c = c.setdefault(part, {})
-            c.setdefault(':rules:', []).append(rule)
-    return rules
-
-def rulesToCCSS(selector, rules):
-    text = selector + ':\n  '
-    if rules.get(':rules:'):
-        text += '\n\n  '.join('\n  '.join(line.strip().rstrip(';') for line in rule.style.cssText.splitlines()) for rule in rules.get(':rules:', [])) + '\n'
-    for other in rules:
-        if other == ':rules:':
-            continue
-        text += '\n  ' + rulesToCCSS(other, rules[other]).replace('\n', '\n  ')
-    return text
-
-def cleverfy(fname):
-    rules = parseCSS(open(fname).read())
-    text = ''
-    for rule in rules:
-        text += rulesToCCSS(rule, rules[rule]) + '\n\n'
-    return text
-
 def do_test():
     rx = re.compile(r'Example::\n(.*?)__END__(?ms)')
     text = rx.search(clevercss.__doc__).group(1)
@@ -105,9 +68,12 @@ def convert_stream():
     import sys
     try:
         print clevercss.convert(sys.stdin.read())
-    except (ParserError, EvalException), e:
+    except (ParseError, TranslateError), e:
         sys.stderr.write('Error: %s\n' % e)
         sys.exit(1)
+    except KeyboardInterrupt:
+        sys.stderr.write('Interrupted\n')
+        sys.exit(2)
 
 def convert_many(files, options):
     for fname in files:
@@ -124,12 +90,12 @@ def convert_many(files, options):
         try:
             try:
                 converted = clevercss.convert(src.read(), fname=fname)
-            except (ParserError, EvalException), e:
+            except (ParseError, TranslateError), e:
                 sys.stderr.write('Error in file %s: %s\n' % (fname, e))
                 sys.exit(1)
             dst = open(target, 'w')
             try:
-                print 'Writing output to %s...' % fname
+                print 'Writing output to %s...' % target
                 dst.write(converted)
             finally:
                 dst.close()

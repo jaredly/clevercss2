@@ -26,5 +26,24 @@ class MagicTest(unittest.TestCase):
     def runSuite(cls, vb=2):
         return unittest.TextTestRunner(verbosity=vb).run(cls.toSuite())
 
+def suite(mod):
+    print 'suiting',mod
+    def meta():
+        thesuite = unittest.TestSuite()
+        module = __import__(mod)
+        for sub in mod.split('.')[1:]:
+            module = getattr(module, sub)
+        for k,v in module.__dict__.iteritems():
+            if inspect.isclass(v) and issubclass(v, MagicTest) and v.__module__ == mod:
+                thesuite.addTest(v.toSuite())
+        return thesuite
+    return meta
+
+def modsuite(*mods):
+    def meta():
+        return unittest.TestSuite(mod.all_tests() for mod in mods)
+    return meta
+
+
 
 # vim: et sw=4 sts=4

@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+
+import re
+
+# list of operators
+OPERATORS = ['+', '-', '*', '/', '%', '(', ')', ';', ',']
 
 # units and conversions
 UNITS = ['em', 'ex', 'px', 'cm', 'mm', 'in', 'pt', 'pc', 'deg', 'rad'
@@ -169,4 +173,33 @@ COLORS = {
 }
 REV_COLORS = dict((v, k) for k, v in COLORS.iteritems())
 
+# partial regular expressions for the expr parser
+r_number = '(?:\s\-)?(?:\d+(?:\.\d+)?|\.\d+)'
+r_string = r"(?:'(?:[^'\\]*(?:\\.[^'\\]*)*)'|" \
+          r'\"(?:[^"\\]*(?:\\.[^"\\]*)*)")'
+r_call = r'([a-zA-Z_][a-zA-Z0-9_]*)\('
+
+regex = {
+    # regular expressions for the normal parser
+    'var_def': re.compile(r'^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)'),
+    'def': re.compile(r'^([a-zA-Z-]+)\s*:\s*(.+)'),
+    'line_comment': re.compile(r'(?<!:)//.*?$'),
+    'multi_comment': re.compile(r'/\*.+?\*/', re.S),
+    'macros_def': re.compile(r'^def ([a-zA-Z-]+)\s*:\s*$'),
+    'macros_call': re.compile(r'^\$([a-zA-Z-]+)'),
+    # regular expressions for the expr parser
+    'operator': re.compile('|'.join(re.escape(x) for x in OPERATORS)),
+    'whitespace': re.compile(r'\s+'),
+    'number': re.compile(r_number + '(?![a-zA-Z0-9_])'),
+    'value': re.compile(r'(%s)(%s)(?![a-zA-Z0-9_])' % (r_number, '|'.join(UNITS))),
+    'color': re.compile(r'#' + ('[a-fA-f0-9]{1,2}' * 3)),
+    'string': re.compile('%s|([^\s*/();,.+$]+|\.(?!%s))+' % (r_string, r_call)),
+    'url': re.compile(r'url\(\s*(%s|.*?)\s*\)' % r_string),
+    'import': re.compile(r'\@import\s+url\(\s*"?(%s|.*?)"?\s*\)' % r_string),
+    'spritemap': re.compile(r'spritemap\(\s*(%s|.*?)\s*\)' % r_string),
+    'backstring': re.compile(r'`([^`]*)`'),
+    'var': re.compile(r'(?<!\\)\$(?:([a-zA-Z_][a-zA-Z0-9_]*)|'
+                    r'\{([a-zA-Z_][a-zA-Z0-9_]*)\})'),
+    'call': re.compile(r'\.' + r_call)
+}
 # vim: et sw=4 sts=4
