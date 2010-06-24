@@ -143,7 +143,12 @@ def BinOp(node, scope):
     result = translate(node.left, scope)
     operators = {'*': operator.mul, '/': operator.div, '+': operator.add, '-': operator.sub}
     for op, value in zip(node.ops, node.values):
-        result = operators[op](result, translate(value, scope))
+        try:
+            nv = translate(value, scope)
+            result = operators[op.value](result, nv)
+        except TypeError:
+            print [result, nv]
+            raise
     return result
 
 @translates(grammar.CSSCOLOR)
@@ -153,5 +158,9 @@ def color(node, scope):
 @translates(grammar.CSSNUMBER)
 def number(node, scope):
     return values.Number(node.value)
+
+@translates('paren')
+def paren(node, scope):
+    return translate(node.value, scope)
 
 # vim: et sw=4 sts=4

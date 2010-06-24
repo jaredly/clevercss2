@@ -70,12 +70,26 @@ def atomic(rule):
     rule | (literal, star(_or(post_attr, post_subs, post_call)))
     rule.astAttrs = {'literal':'literal', 'posts':'post_attr, post_subs, post_call'}
 
+def mul_ex(rule):
+    rule | (atomic, star(_or(*'*/'), atomic))
+    rule.astAttrs = {'left': 'atomic', 'ops': 'SYMBOL[]', 'values': 'atomic[1:]'}
+mul_ex.astName = 'BinOp'
+
+def add_ex(rule):
+    rule | (mul_ex, star(_or(*'-+'), mul_ex))
+    rule.astAttrs = {'left': 'BinOp', 'ops': 'SYMBOL[]', 'values': 'BinOp[1:]'}
+add_ex.astName = 'BinOp'
+
+# add_ex = binop('add_ex', '+-', mul_ex)
+# add_ex.astHelp = 'value (or expression)'
+
 def literal(rule):
     rule | paren | STRING | CSSID | CSSNUMBER | CSSCOLOR
     rule.astAll = True
 
 def paren(rule):
     rule | ('(', add_ex, ')')
+    rule.astAttrs = {'value': 'BinOp'}
 
 def post_attr(rule):
     rule | ('.', CSSID)
@@ -96,9 +110,6 @@ def post(rule):
 def commas(item):
     return (item, star(',', item), [','])
 
-mul_ex = binop('mul_ex', '*/', atomic)
-add_ex = binop('add_ex', '+-', mul_ex)
-add_ex.astHelp = 'value (or expression)'
 
 grammar = Grammar(start=start, indent=True, tokens=[CSSSELECTOR, STRING, CSSID, CSSNUMBER, CSSCOLOR, CCOMMENT, SYMBOL, NEWLINE, WHITE], ignore=[WHITE, CCOMMENT])
 

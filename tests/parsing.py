@@ -3,11 +3,12 @@
 import magictest
 from magictest import MagicTest as TestCase
 
+import clevercss
 from clevercss.grammar import grammar
 from codetalker.pgm.grammar import Text, ParseError
 from codetalker.pgm.errors import *
 
-class CCSSTest(TestCase):
+class Tokenize(TestCase):
     def tokens(self):
         text = Text('hello = world')
         tokens = grammar.get_tokens(text)
@@ -21,6 +22,8 @@ class CCSSTest(TestCase):
         self.assertEqual(len(tokens.tokens), 8)
         self.assertEqual(tokens.tokens[-2].lineno, 2)
 
+
+class Parse(TestCase):
     def parse(self):
         text = 'hello=orld\n\nother=bar\n'
         tree = check_parse(text)
@@ -58,21 +61,8 @@ class CCSSTest(TestCase):
         check_parse('one = -10em')
         check_parse('one = -10%')
 
-def check_parse(text):
-    try:
-        return grammar.process(text)
-    except:
-        return grammar.process(text, debug=True)
-
-def check_fail(text):
-    try:
-        grammar.process(text)
-    except:
-        pass
-    else:
-        grammar.process(text, debug=True)
-        raise Exception('was supposed to fail on \'%s\'' % text.encode('string_escape'))
-
+    def url(self):
+        check_parse('one = url("hello.png")')
 
 def make_pass(grammar, text):
     def meta(self):
@@ -108,9 +98,41 @@ strings = [(
 ),()]
 
 for i, good in enumerate(strings[0]):
-    setattr(CCSSTest, '%d_good' % i, make_pass(grammar, good))
+    setattr(Parse, '%d_good' % i, make_pass(grammar, good))
 for i, bad in enumerate(strings[1]):
-    setattr(CCSSTest, '%d_bad' % i, make_fail(grammar, good))
+    setattr(Parse, '%d_bad' % i, make_fail(grammar, good))
+
+class Convert(TestCase):
+    pass
+
+cases = (('body:\n top: 5', 'body {\n  top: 5;\n}\n', 'basic'),
+        ('body:\n top: 2+4', 'body {\n  top: 6;\n}\n', 'add'),
+        ('body:\n top: (5+4 - 1) /2', 'body {\n  top: 4;\n}\n', 'math'),
+        ('one = 2\nbody:\n top: one', 'body {\n  top: 2;\n}\n', 'vbl'),
+        ('one = 2\nbody:\n top: one+3', 'body {\n  top: 5;\n}\n', 'vbl2'))
+
+def make_convert(ccss, css):
+    def meta(self):
+        self.assertEqual(clevercss.convert(ccss), css)
+    return meta
+
+for i, (ccss, css, name) in enumerate(cases):
+    setattr(Convert, 'convert_%d_%s' % (i, name), make_convert(ccss, css))
+
+def check_parse(text):
+    try:
+        return grammar.process(text)
+    except:
+        return grammar.process(text, debug=True)
+
+def check_fail(text):
+    try:
+        grammar.process(text)
+    except:
+        pass
+    else:
+        grammar.process(text, debug=True)
+        raise Exception('was supposed to fail on \'%s\'' % text.encode('string_escape'))
  
 all_tests = magictest.suite(__name__)
 

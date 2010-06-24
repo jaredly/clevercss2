@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import operator
 import consts
 import re
 
@@ -14,6 +15,14 @@ class Value(object):
     
     def __repr__(self):
         return str(self)
+
+    def calc(self, op, other):
+        return NotImplemented
+
+    __add__ = lambda self, other: self.calc(other, operator.add)
+    __sub__ = lambda self, other: self.calc(other, operator.sub)
+    __div__ = lambda self, other: self.calc(other, operator.div)
+    __mul__ = lambda self, other: self.calc(other, operator.mul)
 
 class Number(Value):
     rx = re.compile(r'(-?(?:\d+(?:\.\d+)?|\.\d+))(px|em|%|pt)?')
@@ -31,6 +40,18 @@ class Number(Value):
         if self.value[1]:
             return u'%s%s' % self.value
         return str(self.value[0])
+
+    def calc(self, other, op):
+        if isinstance(other, Number):
+            if other.value[1] == self.value[1]:
+                return Number((op(self.value[0], other.value[0]), self.value[1]), False)
+            elif self.value[1] and other.value[1]:
+                raise ValueError('cannot do math on numbers of differing units')
+            elif self.value[1]:
+                return Number((op(self.value[0], other.value[0]), self.value[1]), False)
+            elif other.value[1]:
+                return Number((op(self.value[0], other.value[0]), other.value[1]), False)
+        return NotImplemented
 
     methods = ['abs', 'round']
     def abs(self):
@@ -61,11 +82,6 @@ class Color(Value):
                 return NotImplemented
             return Color(tuple(op(a, other.value[0]) for a in self.value), False)
         return NotImplemented
-
-    __add__ = lambda self, other: self.calc(other, operator.add)
-    __sub__ = lambda self, other: self.calc(other, operator.sub)
-    __div__ = lambda self, other: self.calc(other, operator.div)
-    __mul__ = lambda self, other: self.calc(other, operator.mul)
 
     methods = ['brighten', 'darken']
 
