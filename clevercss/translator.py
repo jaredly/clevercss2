@@ -151,6 +151,11 @@ def BinOp(node, scope):
             raise
     return result
 
+@translates('assign')
+def assign(node, scope):
+    scope.vbls[-1][node.left.value] = translate(node.value, scope)
+    return ''
+
 @translates(grammar.CSSCOLOR)
 def color(node, scope):
     return values.Color(node.value)
