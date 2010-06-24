@@ -105,13 +105,30 @@ for i, bad in enumerate(strings[1]):
 class Convert(TestCase):
     pass
 
-cases = (('body:\n top: 5', 'body {\n  top: 5;\n}\n', 'basic'),
+cases = [('body:\n top: 5', 'body {\n  top: 5;\n}\n', 'basic'),
         ('body:\n top: 2+4', 'body {\n  top: 6;\n}\n', 'add'),
         ('body:\n top: (5+4 - 1) /2', 'body {\n  top: 4;\n}\n', 'math'),
         ('one = 2\nbody:\n top: one', 'body {\n  top: 2;\n}\n', 'vbl'),
         ('one = 2\nbody:\n top: one+3', 'body {\n  top: 5;\n}\n', 'vbl math'),
         ('one = 2\nbody:\n one = 3\n top: one\ndiv:\n top: one',
-         'body {\n  top: 3;\n}\n\ndiv {\n  top: 2;\n}\n', 'scoping'))
+         'body {\n  top: 3;\n}\n\ndiv {\n  top: 2;\n}\n', 'scoping')]
+
+cases.append(('''.one, .two:
+    top: 5px
+    .three, .four:
+        left: 10px
+        & > div:
+            bottom: auto''','''\
+.one, .two {
+  top: 5px;
+}
+.one .three, .one .four, .two .three, .two .four {
+  left: 10px;
+}
+.one .three > div, .one .four > div, .two .three > div, .two .four > div {
+  bottom: auto;
+}
+''', 'deep selectors'))
 
 def make_convert(ccss, css):
     def meta(self):
