@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import consts
+import re
 
 class Value(object):
     methods = []
@@ -10,23 +11,26 @@ class Value(object):
     
     def parse(self, value):
         return value
+    
+    def __repr__(self):
+        return str(self)
 
 class Number(Value):
     rx = re.compile(r'(-?(?:\d+(?:\.\d+)?|\.\d+))(px|em|%|pt)?')
     def parse(self, value):
-        match = rx.match(value)
+        match = self.rx.match(value)
         if not match:
             raise ValueError("invalid number '%s'" % value.encode('string_escape'))
         num,units = match.groups()
         num = float(num)
         if int(num) == num:
             num = int(num)
-        return num, unit
+        return num, units
         
     def __str__(self):
         if self.value[1]:
             return u'%s%s' % self.value
-        return self.value[0]
+        return str(self.value[0])
 
     methods = ['abs', 'round']
     def abs(self):
@@ -47,7 +51,7 @@ class Color(Value):
 
     def __str__(self):
         value = '#%02x%02x%02x' % self.value
-        return consts.REV_COLORS(value) or value
+        return consts.REV_COLORS.get(value) or value
 
     def calc(self, other, op):
         if isinstance(other, Color):

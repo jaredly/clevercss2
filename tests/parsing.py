@@ -50,13 +50,13 @@ class CCSSTest(TestCase):
         check_parse('one:\n -moz-something: 17')
         check_fail('two: 4')
         check_fail('one:\n -moz -space: 5')
-        check_fail('one:\n -moz--double: 5')
 
     def neg_number(self):
         check_parse('one = -10')
         check_parse('one = -10px')
-        check_parse('one = -10%')
+        check_parse('one = 10%')
         check_parse('one = -10em')
+        check_parse('one = -10%')
 
 def check_parse(text):
     try:

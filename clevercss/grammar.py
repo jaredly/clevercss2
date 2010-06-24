@@ -19,7 +19,7 @@ class CSSSELECTOR(ReToken):
     rx = re.compile(r'[^\n]+:(?=\n)') #r'(?:[ \t]+|[.:#]?[\w-]+|[>,+&])+:(?=\n|$)')
 
 class CSSID(ReToken):
-    rx = re.compile(r'[a-zA-Z_-][a-zA-Z0-9_-]*')
+    rx = re.compile(r'-?[a-zA-Z_][a-zA-Z0-9_-]*')
 
 class CSSCOLOR(ReToken):
     rx = re.compile(r'#(?:[\da-fA-F]{3}|[\da-fA-F]{6})')
@@ -34,25 +34,25 @@ def statement(rule):
     rule | assign | declare | rule_def
 
 def assign(rule):
-    rule | (ID, '=', value, _or(NEWLINE, EOF))
-    rule.astAttrs = {'left': 'ID', 'value': 'value'}
+    rule | (CSSID, '=', value, _or(NEWLINE, EOF))
+    rule.astAttrs = {'left': 'CSSID', 'value': 'value'}
 
 def attribute(rule):
-    rule | (cssid, ':', value, _or(NEWLINE, EOF))
-    rule.astAttrs = {'attr': 'cssid', 'values': 'add_ex[]'}
+    rule | (CSSID, ':', value, _or(NEWLINE, EOF))
+    rule.astAttrs = {'attr': 'CSSID', 'value': 'value'}
 
 def value(rule):
     rule | plus(add_ex)
-    rule.astAttrs = {'values': 'add_ex[]'}
+    rule.astAttrs = {'values': 'BinOp[]'}
 
-def cssid(rule):
-    rule.no_ignore = True
-    rule | (_or(('-', ID), (ID)), star('-', ID))
-    rule.astAttrs = {'parts': 'ID[], SYMBOL[]'}
+#def cssid(rule):
+    #rule.no_ignore = True
+    #rule | (_or(('-', ID), (ID)), star('-', ID))
+    #rule.astAttrs = {'parts': 'ID,SYMBOL'}
 
 def declare(rule):
-    rule | ('@', ID, '(', [commas(add_ex)], ')', _or(NEWLINE, EOF))
-    rule.astAttrs = {'name': 'ID', 'args': 'add_ex[]'}
+    rule | ('@', CSSID, '(', [commas(add_ex)], ')', _or(NEWLINE, EOF))
+    rule.astAttrs = {'name': 'CSSID', 'args': 'BinOp[]'}
 
 def rule_def(rule):
     rule | (CSSSELECTOR, plus(NEWLINE), INDENT, plus(_or(statement, attribute, NEWLINE)), _or(DEDENT, EOF))
@@ -67,21 +67,39 @@ def binop(name, ops, next):
     return meta
 
 def atomic(rule):
-    rule | (_or(paren, STRING, ID, CSSNUMBER, CSSCOLOR), star(post))
+    rule | (literal, star(_or(post_attr, post_subs, post_call)))
+    rule.astAttrs = {'literal':'literal', 'posts':'post_attr, post_subs, post_call'}
+
+def literal(rule):
+    rule | paren | STRING | CSSID | CSSNUMBER | CSSCOLOR
+    rule.astAll = True
 
 def paren(rule):
     rule | ('(', add_ex, ')')
 
+def post_attr(rule):
+    rule | ('.', CSSID)
+    rule.astAttrs = {'name': 'CSSID'}
+
+def post_subs(rule):
+    rule | ('[', add_ex, ']')
+    rule.astAttrs = {'subscript': 'BinOp'}
+
+def post_call(rule):
+    rule | ('(', [commas(add_ex)], ')')
+    rule.astAttrs = {'args': 'BinOp[]'}
+
 def post(rule):
-    rule | ('.', ID) | ('[', add_ex, ']') | ('(', [commas(add_ex)], ')')
+    rule | ('.', CSSID) | ('[', add_ex, ']') | ('(', [commas(add_ex)], ')')
+    rule.astAll = True
 
 def commas(item):
     return (item, star(',', item), [','])
 
-mul_ex = binop('muldiv', '*/', atomic)
-add_ex = binop('expression', '+-', mul_ex)
+mul_ex = binop('mul_ex', '*/', atomic)
+add_ex = binop('add_ex', '+-', mul_ex)
 add_ex.astHelp = 'value (or expression)'
 
-grammar = Grammar(start=start, indent=True, tokens=[CSSSELECTOR, STRING, ID, CSSNUMBER, CSSCOLOR, CCOMMENT, SYMBOL, NEWLINE, WHITE], ignore=[WHITE, CCOMMENT])
+grammar = Grammar(start=start, indent=True, tokens=[CSSSELECTOR, STRING, CSSID, CSSNUMBER, CSSCOLOR, CCOMMENT, SYMBOL, NEWLINE, WHITE], ignore=[WHITE, CCOMMENT])
 
 # vim: et sw=4 sts=4

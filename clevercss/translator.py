@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
 from codetalker.pgm.tokens import Token
+from codetalker.pgm import tokens
 from errors import TranslateError
+import operator
+import grammar
+import values
+import consts
 
 translators = {}
 def translates(name):
@@ -15,9 +20,9 @@ def translate(node, scope):
         if node.__class__ in translators:
             return translators[node.__class__](node, scope)
         else:
-            raise TranslateError('unknown token: %s' % node)
+            raise TranslateError('Unknown token: %s' % repr(node))
     elif type(node) in (list, tuple):
-        return '\n\n'.join(''.join('' + line for line in str(translate(one, scope)).splitlines(true)) for one in node)
+        return '\n\n'.join(''.join('' + line for line in str(translate(one, scope)).splitlines(True)) for one in node)
     elif node.name in translators:
         return translators[node.name](node, scope)
     raise TranslateError('unknown node type: %s' % node.name)
@@ -28,8 +33,9 @@ def indent(text, num):
 
 @translates('rule_def')
 def rule(node, scope):
-    sel = node.selector.value
+    sel = node.selector.value[:-1].strip()
     scope.vbls.append({})
+    scope.rules.append(sel)
     text = ''
     after = ''
     for item in node.body:
@@ -45,11 +51,52 @@ def rule(node, scope):
         else:
             text += translate(item, scope)
     scope.vbls.pop(-1)
-    return '%s {\n%s}\n%s' % (sel, text, after)
+    selector = ' '.join(scope.rules)
+    scope.rules.pop(-1)
+    return '%s {\n%s}\n%s' % (selector, text, after)
 
 @translates('attribute')
 def attribute(node, scope):
-    return '%s: %s;\n' % (node.attr.value, translates(node.value, scope))
+    return '%s: %s;\n' % (node.attr.value, translate(node.value, scope))
+
+@translates('atomic')
+def atomic(node, scope):
+    value = translate(node.literal, scope)
+    #if getattr(value, '__name__', None) == 'meta':
+        #print 'meta -- css_func', [value, node.literal, node.posts]
+    for post in node.posts:
+        if post.name == 'post_attr':
+            value = getattr(value, str(post.name.value))
+        elif post.name == 'post_subs':
+            sub = translate(post.subscript, scope)
+            value = value.__getitem__(sub)
+        elif post.name == 'post_call':
+            args = []
+            for arg in post.args:
+                args.append(translate(arg, scope))
+            value = value(*args)
+        else:
+            raise TranslateError('invalid postfix operation found: %s' % repr(post))
+    return value
+
+@translates('literal')
+def literal(node, scope):
+    return translate(node.items[0], scope)
+
+@translates(grammar.CSSID)
+def literal(node, scope):
+    for dct in reversed(scope.vbls):
+        if node.value in dct:
+            return dct[node.value]
+    if node.value in consts.CSS_VALUES:
+        return node.value
+    elif node.value in consts.CSS_FUNCTIONS:
+        return consts.css_func(node.value)
+    raise ValueError('undefined variable: %s' % node.value)
+
+@translates(tokens.STRING)
+def string(node, scope):
+    return node.value
 
 '''value types....
 
@@ -65,9 +112,28 @@ def value(node, scope):
     if len(node.values) > 1:
         res = []
         for value in node.values:
-            res.append(evaluate(value, scope))
+            res.append(str(translate(value, scope)))
         return ' '.join(res)
-    return 
+    elif not node.values:
+        print node._tree
+        raise ValueError('no values')
+    return translate(node.values[0], scope)
 
+@translates('BinOp')
+def BinOp(node, scope):
+    result = translate(node.left, scope)
+    #print 'binop', result, node._tree, dir(node), node.left
+    operators = {'*': operator.mul, '/': operator.div, '+': operator.add, '-': operator.sub}
+    for op, value in zip(node.ops, node.values):
+        result = operators[op](result, translate(value, scope))
+    return result
+
+@translates(grammar.CSSCOLOR)
+def color(node, scope):
+    return values.Color(node.value)
+
+@translates(grammar.CSSNUMBER)
+def number(node, scope):
+    return values.Number(node.value)
 
 # vim: et sw=4 sts=4

@@ -2,13 +2,20 @@
 
 from grammar import grammar
 from translator import translate
+import consts
 
 VERSION = '0.5'
 
-def convert(source, context=None, fname=None, minified=False):
+class Scope:
+    pass
+
+def convert(source, variables={}, fname=None, minified=False):
     """Convert CleverCSS text into normal CSS."""
     tree = grammar.process(source)
     ast = grammar.toAst(tree)
+    context = Scope()
+    context.vbls = [consts.defaults, variables.copy()]
+    context.rules = []
     text = translate(ast, context)
     return text
 
