@@ -94,7 +94,7 @@ def rule(node, scope):
     if not text.strip():
         rule_text = ''
     else:
-        rule_text = '%s {\n%s}\n' % (selector, indent(text, 2))
+        rule_text = '%s {\n%s}\n' % (selector, indent(text, scope.indent))
     return rule_text + after
 
 def get_selector(scope):

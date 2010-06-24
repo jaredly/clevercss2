@@ -104,13 +104,13 @@ for i, bad in enumerate(strings[1]):
 class Convert(TestCase):
     pass
 
-cases = [('body:\n top: 5', 'body {\n  top: 5;\n}\n', 'basic'),
-        ('body:\n top: 2+4', 'body {\n  top: 6;\n}\n', 'add'),
-        ('body:\n top: (5+4 - 1) /2', 'body {\n  top: 4;\n}\n', 'math'),
-        ('one = 2\nbody:\n top: one', 'body {\n  top: 2;\n}\n', 'vbl'),
-        ('one = 2\nbody:\n top: one+3', 'body {\n  top: 5;\n}\n', 'vbl math'),
+cases = [('body:\n top: 5', 'body {\n    top: 5;\n}\n', 'basic'),
+        ('body:\n top: 2+4', 'body {\n    top: 6;\n}\n', 'add'),
+        ('body:\n top: (5+4 - 1) /2', 'body {\n    top: 4;\n}\n', 'math'),
+        ('one = 2\nbody:\n top: one', 'body {\n    top: 2;\n}\n', 'vbl'),
+        ('one = 2\nbody:\n top: one+3', 'body {\n    top: 5;\n}\n', 'vbl math'),
         ('one = 2\nbody:\n one = 3\n top: one\ndiv:\n top: one',
-         'body {\n  top: 3;\n}\n\ndiv {\n  top: 2;\n}\n', 'scoping')]
+         'body {\n    top: 3;\n}\n\ndiv {\n    top: 2;\n}\n', 'scoping')]
 
 cases.append(('''.one, .two:
     top: 5px
@@ -119,13 +119,13 @@ cases.append(('''.one, .two:
         & > div:
             bottom: auto''','''\
 .one, .two {
-  top: 5px;
+    top: 5px;
 }
 .one .three, .one .four, .two .three, .two .four {
-  left: 10px;
+    left: 10px;
 }
 .one .three > div, .one .four > div, .two .three > div, .two .four > div {
-  bottom: auto;
+    bottom: auto;
 }
 ''', 'deep selectors'))
 
@@ -144,22 +144,22 @@ a, div:
     @something()
 ''', '''\
 body {
-  height: 20px;
-  color: green;
-  width: 25%;
+    height: 20px;
+    color: green;
+    width: 25%;
 }
 body a {
-  font-size: 8px;
-  line-height: 20px;
+    font-size: 8px;
+    line-height: 20px;
 }
 
 a, div {
-  color: green;
-  width: 25%;
+    color: green;
+    width: 25%;
 }
 a a, div a {
-  font-size: 8px;
-  line-height: 20px;
+    font-size: 8px;
+    line-height: 20px;
 }
 ''', 'bigold mixin'))
 cases.append(('''
@@ -173,21 +173,21 @@ div:
     @abc(#F00, 2pt, 11px)
 ''', '''\
 body {
-  color: green;
-  size: 5em;
-  font-size: 15px;
+    color: green;
+    size: 5em;
+    font-size: 15px;
 }
 
 div {
-  color: red;
-  size: 2pt;
-  font-size: 1px;
+    color: red;
+    size: 2pt;
+    font-size: 1px;
 }
 ''', 'mixin w/ args'))
 
 def make_convert(ccss, css):
     def meta(self):
-        a = clevercss.convert(ccss)
+        a = clevercss.convert(ccss, indent=4)
         if a != css:
             print a
             print css
