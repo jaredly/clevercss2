@@ -94,7 +94,6 @@ strings = [(
     '@import("abc.css")',
     '@dothis()',
     '@other(1, 3, 4+5, 45/manhatten)',
-
 ),()]
 
 for i, good in enumerate(strings[0]):
@@ -130,9 +129,69 @@ cases.append(('''.one, .two:
 }
 ''', 'deep selectors'))
 
+cases.append(('''
+@something:
+    color: green
+    width: 25%
+    size = 4
+    a:
+        font-size: 2px*size
+        line-height: size*5px
+body:
+    height: 20px
+    @something()
+a, div:
+    @something()
+''', '''\
+body {
+  height: 20px;
+  color: green;
+  width: 25%;
+}
+body a {
+  font-size: 8px;
+  line-height: 20px;
+}
+
+a, div {
+  color: green;
+  width: 25%;
+}
+a a, div a {
+  font-size: 8px;
+  line-height: 20px;
+}
+''', 'bigold mixin'))
+cases.append(('''
+@abc(a, b, c=25px):
+    color: a
+    size: b
+    font-size: c - 10px
+body:
+    @abc(green, 5em)
+div:
+    @abc(#F00, 2pt, 11px)
+''', '''\
+body {
+  color: green;
+  size: 5em;
+  font-size: 15px;
+}
+
+div {
+  color: red;
+  size: 2pt;
+  font-size: 1px;
+}
+''', 'mixin w/ args'))
+
 def make_convert(ccss, css):
     def meta(self):
-        self.assertEqual(clevercss.convert(ccss), css)
+        a = clevercss.convert(ccss)
+        if a != css:
+            print a
+            print css
+        self.assertEqual(a, css)
     return meta
 
 for i, (ccss, css, name) in enumerate(cases):

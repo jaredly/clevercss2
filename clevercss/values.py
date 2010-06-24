@@ -21,6 +21,7 @@ class Value(object):
 
     __add__ = lambda self, other: self.calc(other, operator.add)
     __sub__ = lambda self, other: self.calc(other, operator.sub)
+    __rsub__ = lambda self, other: self.calc(other, operator.sub, True)
     __div__ = lambda self, other: self.calc(other, operator.div)
     __mul__ = lambda self, other: self.calc(other, operator.mul)
 
@@ -41,16 +42,22 @@ class Number(Value):
             return u'%s%s' % self.value
         return str(self.value[0])
 
-    def calc(self, other, op):
+    def calc(self, other, op, reverse=False):
         if isinstance(other, Number):
+            if reverse:
+                newvalue = op(other.value[0], self.value[0])
+            else:
+                newvalue = op(self.value[0], other.value[0])
             if other.value[1] == self.value[1]:
-                return Number((op(self.value[0], other.value[0]), self.value[1]), False)
+                return Number((newvalue, self.value[1]), False)
             elif self.value[1] and other.value[1]:
                 raise ValueError('cannot do math on numbers of differing units')
             elif self.value[1]:
-                return Number((op(self.value[0], other.value[0]), self.value[1]), False)
+                return Number((newvalue, self.value[1]), False)
             elif other.value[1]:
-                return Number((op(self.value[0], other.value[0]), other.value[1]), False)
+                return Number((newvalue, other.value[1]), False)
+        else:
+            print 'Nope',self, other, op
         return NotImplemented
 
     methods = ['abs', 'round']

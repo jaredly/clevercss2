@@ -45,14 +45,9 @@ def value(rule):
     rule | plus(add_ex)
     rule.astAttrs = {'values': 'BinOp[]'}
 
-#def cssid(rule):
-    #rule.no_ignore = True
-    #rule | (_or(('-', ID), (ID)), star('-', ID))
-    #rule.astAttrs = {'parts': 'ID,SYMBOL'}
-
 def declare(rule):
     rule | ('@', CSSID, '(', [commas(add_ex)], ')', _or(NEWLINE, EOF))
-    rule.astAttrs = {'name': 'CSSID', 'args': 'BinOp[]'}
+    rule.astAttrs = {'which': 'CSSID', 'args': 'BinOp[]'}
 
 def rule_def(rule):
     rule | (CSSSELECTOR, plus(NEWLINE), INDENT, plus(_or(statement, attribute, NEWLINE)), _or(DEDENT, EOF))
