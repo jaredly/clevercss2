@@ -22,14 +22,14 @@ def translate(node, scope):
         else:
             raise TranslateError('Unknown token: %s' % repr(node))
     elif type(node) in (list, tuple):
-        return '\n\n'.join(''.join('' + line for line in str(translate(one, scope)).splitlines(True)) for one in node)
+        return '\n'.join(''.join('' + line for line in str(translate(one, scope)).splitlines(True)) for one in node)
     elif node.name in translators:
         return translators[node.name](node, scope)
     raise TranslateError('unknown node type: %s' % node.name)
 
 def indent(text, num):
     white = ' '*num
-    return ''.join(white + line for line in text.splilines(True))
+    return ''.join(white + line for line in text.splitlines(True))
 
 @translates('rule_def')
 def rule(node, scope):
@@ -51,9 +51,28 @@ def rule(node, scope):
         else:
             text += translate(item, scope)
     scope.vbls.pop(-1)
-    selector = ' '.join(scope.rules)
+    selector = get_selector(scope)
     scope.rules.pop(-1)
-    return '%s {\n%s}\n%s' % (selector, text, after)
+    if not text:
+        rule_text = ''
+    else:
+        rule_text = '%s {\n%s}\n' % (selector, indent(text, 2))
+    return rule_text + after
+
+def get_selector(scope):
+    rules = ['']
+    for item in scope.rules:
+        new = []
+        for parent in rules:
+            for child in item.split(','):
+                child = child.strip()
+                if '&' in child:
+                    new.append(child.replace('&', parent).strip())
+                else:
+                    new.append((parent + ' ' + child).strip())
+        rules = new
+    return ', '.join(rules)
+        
 
 @translates('attribute')
 def attribute(node, scope):
@@ -122,7 +141,6 @@ def value(node, scope):
 @translates('BinOp')
 def BinOp(node, scope):
     result = translate(node.left, scope)
-    #print 'binop', result, node._tree, dir(node), node.left
     operators = {'*': operator.mul, '/': operator.div, '+': operator.add, '-': operator.sub}
     for op, value in zip(node.ops, node.values):
         result = operators[op](result, translate(value, scope))
