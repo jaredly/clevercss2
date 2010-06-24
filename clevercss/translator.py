@@ -22,7 +22,7 @@ def translate(node, scope):
         else:
             raise TranslateError('Unknown token: %s' % repr(node))
     elif type(node) in (list, tuple):
-        return '\n'.join(''.join('' + line for line in str(translate(one, scope)).splitlines(True)) for one in node)
+        return '\n'.join(''.join('' + line for line in str(translate(one, scope)).splitlines(True)) for one in node).strip() + '\n'
     elif node.name in translators:
         return translators[node.name](node, scope)
     raise TranslateError('unknown node type: %s' % node.name)
@@ -53,7 +53,7 @@ def rule(node, scope):
     scope.vbls.pop(-1)
     selector = get_selector(scope)
     scope.rules.pop(-1)
-    if not text:
+    if not text.strip():
         rule_text = ''
     else:
         rule_text = '%s {\n%s}\n' % (selector, indent(text, 2))
