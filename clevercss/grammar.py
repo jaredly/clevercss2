@@ -7,8 +7,11 @@ really awesome ;)
 '''
 
 from codetalker.pgm import Grammar
-from codetalker.pgm.special import star, plus, _or
-from codetalker.pgm.tokens import STRING, ID, NUMBER, EOF, NEWLINE, WHITE, SYMBOL, CCOMMENT, ReToken, INDENT, DEDENT, StringToken
+from codetalker.pgm.special import star, plus, _or, commas
+from codetalker.pgm.tokens import STRING, ID, NUMBER, EOF, NEWLINE, WHITE, CCOMMENT, ReToken, INDENT, DEDENT, StringToken
+
+class SYMBOL(StringToken):
+    items = list('.()=:')
 
 import re
 class CSSNUMBER(ReToken):
@@ -22,7 +25,7 @@ class CSSID(ReToken):
     rx = re.compile(r'-?[a-zA-Z_][a-zA-Z0-9_-]*')
 
 class CSSCOLOR(ReToken):
-    rx = re.compile(r'#(?:[\da-fA-F]{3}|[\da-fA-F]{6})')
+    rx = re.compile(r'#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})')
 
 class SYMBOL(StringToken):
     items = tuple('+-*/@(),=:.')
@@ -101,10 +104,6 @@ def post_call(rule):
 def post(rule):
     rule | ('.', CSSID) | ('[', add_ex, ']') | ('(', [commas(add_ex)], ')')
     rule.astAll = True
-
-def commas(item):
-    return (item, star(',', item), [','])
-
 
 grammar = Grammar(start=start, indent=True, tokens=[CSSSELECTOR, STRING, CSSID, CSSNUMBER, CSSCOLOR, CCOMMENT, SYMBOL, NEWLINE, WHITE], ignore=[WHITE, CCOMMENT])
 

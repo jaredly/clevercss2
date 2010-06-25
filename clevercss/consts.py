@@ -169,8 +169,8 @@ COLORS = {
 }
 REV_COLORS = dict((v, k) for k, v in COLORS.iteritems())
 
-CSS_VALUES = 'visible relative solid dotted dashed left right center none transparent block no-repeat absolute hidden visible fixed auto'.split(' ')
-CSS_FUNCTIONS = 'url'.split(' ')
+CSS_VALUES = 'visible relative solid dotted dashed left right center none transparent block no-repeat absolute hidden visible fixed auto pointer normal bold break-word'.split(' ')
+CSS_FUNCTIONS = 'url rgb rgba'.split(' ')
 
 '''
 class CSS_FUNC:

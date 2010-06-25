@@ -11,16 +11,16 @@ from codetalker.pgm.errors import *
 class Tokenize(TestCase):
     def tokens(self):
         text = Text('hello = world')
-        tokens = grammar.get_tokens(text)
-        self.assertEqual(len(tokens.tokens), 6)
-        self.assertEqual(tokens.tokens[2].charno, 7)
-        self.assertEqual(tokens.tokens[-2].value, 'world')
+        tokens = grammar.get_tokens(text).get_all()
+        self.assertEqual(len(tokens), 6)
+        self.assertEqual(tokens[2].charno, 7)
+        self.assertEqual(tokens[-2].value, 'world')
 
     def token_lines(self):
         text = Text('hello\nworld = 6')
-        tokens = grammar.get_tokens(text)
-        self.assertEqual(len(tokens.tokens), 8)
-        self.assertEqual(tokens.tokens[-2].lineno, 2)
+        tokens = grammar.get_tokens(text).get_all()
+        self.assertEqual(len(tokens), 8)
+        self.assertEqual(tokens[-2].lineno, 2)
 
 
 class Parse(TestCase):
