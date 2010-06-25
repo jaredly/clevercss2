@@ -35,75 +35,68 @@ def start(rule):
 
 def statement(rule):
     rule | assign | declare | rule_def
+    rule.pass_single = True
 
 def assign(rule):
     rule | (CSSID, '=', value, _or(NEWLINE, EOF))
-    rule.astAttrs = {'left': 'CSSID', 'value': 'value'}
+    rule.astAttrs = {'left': {'type':CSSID, 'single':True}, 'value': {'type':value, 'single':True}}
 
 def attribute(rule):
     rule | (CSSID, ':', value, _or(NEWLINE, EOF))
-    rule.astAttrs = {'attr': 'CSSID', 'value': 'value'}
+    rule.astAttrs = {'attr': {'type':CSSID, 'single':True}, 'value': {'type':value, 'single':True}}
 
 def value(rule):
-    rule | plus(add_ex)
-    rule.astAttrs = {'values': 'BinOp[]'}
+    rule | plus(expression)
+    rule.astAttrs = {'values': expression}
 
 def declare(rule):
-    rule | ('@', CSSID, '(', [commas(add_ex)], ')', _or(NEWLINE, EOF))
-    rule.astAttrs = {'which': 'CSSID', 'args': 'BinOp[]'}
+    rule | ('@', CSSID, '(', [commas(expression)], ')', _or(NEWLINE, EOF))
+    rule.astAttrs = {'type': {'type':CSSID, 'single':True}, 'args': expression}
 
 def rule_def(rule):
     rule | (CSSSELECTOR, plus(NEWLINE), INDENT, plus(_or(statement, attribute, NEWLINE)), _or(DEDENT, EOF))
-    rule.astAttrs = {'selector': 'CSSSELECTOR', 'body': 'statement,attribute'}
+    rule.astAttrs = {'selector': {'type':CSSSELECTOR, 'single':True}, 'body': [statement, attribute]}
 
 def binop(name, ops, next):
     def meta(rule):
         rule | (next, star(_or(*ops), next))
-        next_name = getattr(next, 'astName', next.__name__)
-        rule.astAttrs = {'left': next_name, 'ops': 'SYMBOL[]', 'values': '%s[1:]' % next_name}
+        rule.astAttrs = {'left': {'type':next, 'single':True}, 'ops': SYMBOL, 'values': {'type':next, 'start':1}}
     meta.astName = 'BinOp'
     return meta
 
 def atomic(rule):
     rule | (literal, star(_or(post_attr, post_subs, post_call)))
-    rule.astAttrs = {'literal':'literal', 'posts':'post_attr, post_subs, post_call'}
+    rule.astAttrs = {'literal':{'type':literal, 'single':True}, 'posts':(post_attr, post_subs, post_call)}
 
 def mul_ex(rule):
     rule | (atomic, star(_or(*'*/'), atomic))
-    rule.astAttrs = {'left': 'atomic', 'ops': 'SYMBOL[]', 'values': 'atomic[1:]'}
+    rule.astAttrs = {'left': {'type':atomic, 'single':True}, 'ops': SYMBOL, 'values': {'type':atomic, 'start':1}}
 mul_ex.astName = 'BinOp'
 
-def add_ex(rule):
+def expression(rule):
     rule | (mul_ex, star(_or(*'-+'), mul_ex))
-    rule.astAttrs = {'left': 'BinOp', 'ops': 'SYMBOL[]', 'values': 'BinOp[1:]'}
-add_ex.astName = 'BinOp'
-
-# add_ex = binop('add_ex', '+-', mul_ex)
-# add_ex.astHelp = 'value (or expression)'
+    rule.astAttrs = {'left': {'type':mul_ex, 'single':True}, 'ops': SYMBOL, 'values': {'type':mul_ex, 'start':1}}
+expression.astName = 'BinOp'
 
 def literal(rule):
     rule | paren | STRING | CSSID | CSSNUMBER | CSSCOLOR
-    rule.astAll = True
+    rule.pass_single = True
 
 def paren(rule):
-    rule | ('(', add_ex, ')')
-    rule.astAttrs = {'value': 'BinOp'}
+    rule | ('(', expression, ')')
+    rule.pass_single = True
 
 def post_attr(rule):
     rule | ('.', CSSID)
-    rule.astAttrs = {'name': 'CSSID'}
+    rule.astAttrs = {'name': {'type':CSSID, 'single':True}}
 
 def post_subs(rule):
-    rule | ('[', add_ex, ']')
-    rule.astAttrs = {'subscript': 'BinOp'}
+    rule | ('[', expression, ']')
+    rule.astAttrs = {'subscript': {'type':expression, 'single':True}}
 
 def post_call(rule):
-    rule | ('(', [commas(add_ex)], ')')
-    rule.astAttrs = {'args': 'BinOp[]'}
-
-def post(rule):
-    rule | ('.', CSSID) | ('[', add_ex, ']') | ('(', [commas(add_ex)], ')')
-    rule.astAll = True
+    rule | ('(', [commas(expression)], ')')
+    rule.astAttrs = {'args': expression}
 
 grammar = Grammar(start=start, indent=True, tokens=[CSSSELECTOR, STRING, CSSID, CSSNUMBER, CSSCOLOR, CCOMMENT, SYMBOL, NEWLINE, WHITE], ignore=[WHITE, CCOMMENT])
 

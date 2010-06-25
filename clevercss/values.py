@@ -23,6 +23,7 @@ class Value(object):
     __sub__ = lambda self, other: self.calc(other, operator.sub)
     __rsub__ = lambda self, other: self.calc(other, operator.sub, True)
     __div__ = lambda self, other: self.calc(other, operator.div)
+    __rdiv__ = lambda self, other: self.calc(other, operator.div, True)
     __mul__ = lambda self, other: self.calc(other, operator.mul)
 
 class Number(Value):
@@ -56,8 +57,6 @@ class Number(Value):
                 return Number((newvalue, self.value[1]), False)
             elif other.value[1]:
                 return Number((newvalue, other.value[1]), False)
-        else:
-            print 'Nope',self, other, op
         return NotImplemented
 
     methods = ['abs', 'round']

@@ -172,21 +172,6 @@ REV_COLORS = dict((v, k) for k, v in COLORS.iteritems())
 CSS_VALUES = 'visible relative solid dotted dashed left right center none transparent block no-repeat absolute hidden visible fixed auto pointer normal bold break-word'.split(' ')
 CSS_FUNCTIONS = 'url rgb rgba'.split(' ')
 
-'''
-class CSS_FUNC:
-    def __init__(self, name):
-        self.name = name
-        self.called = False
-
-    def __call__(self, *args):
-        if self.called:
-            raise ValueError('cannot call a special css function twice')
-        self.called = True
-        self.args = args
-
-    def __str__(self):
-    '''
-
 def css_func(name):
     def meta(*args):
         return '%s(%s)' % (name, ', '.join(str(arg) for arg in args))
