@@ -32,6 +32,7 @@ class SYMBOL(StringToken):
 
 def start(rule):
     rule | (star(_or(statement, NEWLINE)))
+    rule.astAttrs = {'body': statement}
 
 def statement(rule):
     rule | assign | declare | rule_def
@@ -51,7 +52,7 @@ def value(rule):
 
 def declare(rule):
     rule | ('@', CSSID, '(', [commas(expression)], ')', _or(NEWLINE, EOF))
-    rule.astAttrs = {'type': {'type':CSSID, 'single':True}, 'args': expression}
+    rule.astAttrs = {'name': {'type':CSSID, 'single':True}, 'args': expression}
 
 def rule_def(rule):
     rule | (CSSSELECTOR, plus(NEWLINE), INDENT, plus(_or(statement, attribute, NEWLINE)), _or(DEDENT, EOF))
@@ -98,6 +99,14 @@ def post_call(rule):
     rule | ('(', [commas(expression)], ')')
     rule.astAttrs = {'args': expression}
 
-grammar = Grammar(start=start, indent=True, tokens=[CSSSELECTOR, STRING, CSSID, CSSNUMBER, CSSCOLOR, CCOMMENT, SYMBOL, NEWLINE, WHITE], ignore=[WHITE, CCOMMENT])
+def declare_args(rule):
+    rule | ('(', [commas(arg)], ')')
+    rule.astAttrs = {'args': arg}
+
+def arg(rule):
+    rule | (CSSID, ['=', expression])
+    rule.astAttrs = {'name':{'type':CSSID, 'single':True}, 'value':{'type':expression, 'optional':True, 'single':True}}
+
+grammar = Grammar(start=start, indent=True, tokens=[CSSSELECTOR, STRING, CSSID, CSSNUMBER, CSSCOLOR, CCOMMENT, SYMBOL, NEWLINE, WHITE], ignore=[WHITE, CCOMMENT], ast_tokens=[CSSID, CSSCOLOR, STRING, CSSNUMBER])
 
 # vim: et sw=4 sts=4

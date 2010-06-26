@@ -110,7 +110,7 @@ cases = [('body:\n top: 5', 'body {\n    top: 5;\n}\n', 'basic'),
         ('one = 2\nbody:\n top: one', 'body {\n    top: 2;\n}\n', 'vbl'),
         ('one = 2\nbody:\n top: one+3', 'body {\n    top: 5;\n}\n', 'vbl math'),
         ('one = 2\nbody:\n one = 3\n top: one\ndiv:\n top: one',
-         'body {\n    top: 3;\n}\n\ndiv {\n    top: 2;\n}\n', 'scoping')]
+         'body {\n    top: 3;\n}\ndiv {\n    top: 2;\n}\n', 'scoping')]
 
 cases.append(('''.one, .two:
     top: 5px
@@ -152,7 +152,6 @@ body a {
     font-size: 8px;
     line-height: 20px;
 }
-
 a, div {
     color: green;
     width: 25%;
@@ -177,7 +176,6 @@ body {
     size: 5em;
     font-size: 15px;
 }
-
 div {
     color: red;
     size: 2pt;
