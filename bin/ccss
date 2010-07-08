@@ -8,8 +8,7 @@ import clevercss
 from clevercss.backwards import cleverfy
 from clevercss.errors import ParseError, TranslateError
 
-help_text = '''
-usage: %prog <file 1> ... <file n>
+help_text = '''%prog <file 1> ... <file n>
   if called with some filenames it will read each file, cut of
   the extension and append a ".css" extension and save. If 
   the target file has the same name as the source file it will
