@@ -105,7 +105,8 @@ def declare_args(rule):
 
 def arg(rule):
     rule | (CSSID, ['=', expression])
-    rule.astAttrs = {'name':{'type':CSSID, 'single':True}, 'value':{'type':expression, 'optional':True, 'single':True}}
+    rule.astAttrs = {'name':{'type':CSSID, 'single':True},
+                     'value':{'type':expression, 'optional':True, 'single':True}}
 
 grammar = Grammar(start=start, indent=True, tokens=[CSSSELECTOR, STRING, CSSID, CSSNUMBER, CSSCOLOR, CCOMMENT, SYMBOL, NEWLINE, WHITE], ignore=[WHITE, CCOMMENT], ast_tokens=[CSSID, CSSCOLOR, STRING, CSSNUMBER])
 

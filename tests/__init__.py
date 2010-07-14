@@ -9,11 +9,11 @@ import minify
 import spritemap_test
 '''
 import parsing
-import tokenize
+import tokenize_
 import one_liners
 
 # mods = [color_convert, ccss_to_css, minify, spritemap_test]
-mods = [parsing, tokenize, one_liners]
+mods = [parsing, tokenize_, one_liners]
 def all_tests():
     return unittest.TestSuite(getattr(mod, 'all_tests')() for mod in mods)
 

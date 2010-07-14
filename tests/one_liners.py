@@ -6,7 +6,6 @@ from clevercss.grammar import grammar
 
 class Parse(TestCase):
     pass
-
 strings = [(
     # assignment + expressions
     'a = b',
@@ -22,7 +21,7 @@ strings = [(
 ),()]
 
 def make_pass(text):
-    def meta(self):
+    def meta(self, *a, **b):
         result = grammar.process(text)
         self.assertEquals(str(result), text)
         # self.assertEquals(''.join(str(tk) for tk in result), text)
@@ -32,5 +31,7 @@ for st in strings[0]:
     setattr(Parse, st, make_pass(st))
 
 all_tests = test_suite = magictest.suite(__name__)
+## import unittest
+## unittest.TextTestRunner(verbosity=2).run(test_suite())
 
 # vim: et sw=4 sts=4
