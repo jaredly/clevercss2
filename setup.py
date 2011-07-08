@@ -22,5 +22,6 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python'
     ],
+    scripts=['bin/ccss',],
     test_suite = 'tests.all_tests',
 )
