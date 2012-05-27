@@ -33,20 +33,20 @@ def handle_body(tree, scope):
             text += CCSS.translate(node, scope)
     return text, after
 
-@CCSS.translates(ast.start)
+@CCSS.translates(ast.Start)
 def start(node, scope):
     return ''.join(CCSS.translate(st, scope) for st in node.body)
 
-@CCSS.translates(ast.assign)
+@CCSS.translates(ast.Assign)
 def assign(node, scope):
     scope.vbls[0][node.left.value] = CCSS.translate(node.value, scope)
     return ''
 
-@CCSS.translates(ast.value)
+@CCSS.translates(ast.Value)
 def value(node, scope):
     return ' '.join(str(CCSS.translate(single, scope)) for single in node.values)
 
-@CCSS.translates(ast.declare)
+@CCSS.translates(ast.Declare)
 def declarer(node, scope):
     text, after = handle_declare(node, scope)
     return text + '\n' + after
@@ -69,11 +69,11 @@ def handle_declare(node, scope):
     scope.vbls.pop(0)
     return text, after
 
-@CCSS.translates(ast.attribute)
+@CCSS.translates(ast.Attribute)
 def attribute(node, scope):
     return '%s: %s;\n' % (node.attr.value, CCSS.translate(node.value, scope))
 
-@CCSS.translates(ast.rule_def)
+@CCSS.translates(ast.RuleDef)
 def rule_def(node, scope):
     selector = node.selector.value[:-1].strip()
     if selector.startswith('@'):
@@ -142,7 +142,7 @@ def indent(text, num):
     white = ' '*num
     return ''.join(white + line for line in text.splitlines(True))
 
-@CCSS.translates(ast.atomic)
+@CCSS.translates(ast.Atomic)
 def atomic(node, scope):
     value = CCSS.translate(node.literal, scope)
     for post in node.posts:
@@ -185,7 +185,7 @@ function
 
 '''
 
-@CCSS.translates(ast.value)
+@CCSS.translates(ast.Value)
 def value(node, scope):
     res = None
     if len(node.values) > 1:
